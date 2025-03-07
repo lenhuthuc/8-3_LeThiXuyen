@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trái Tim & Lá Thư</title>
+    <style>
+        body {
+            background-color: pink;
+            overflow: hidden;
+            margin: 0;
+        }
+        .heart {
+            position: absolute;
+            font-size: 24px;
+            color: red;
+            user-select: none;
+        }
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <audio id="bg-music" autoplay loop muted>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+    <div class="container">
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let state = "heart";
+        let heartDrawn = false; // Biến kiểm tra đã vẽ xong trái tim chưa
+
+        const scale = 15;
+        let points = [];
+        for (let t = 0; t < Math.PI * 2; t += 0.01) {
+            points.push({
+                x: scale * (16 * Math.pow(Math.sin(t), 3)),
+                y: scale * (- (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)))
+            });
+        }
+
+        let i = 0;
+        function drawHeart() {
+            if (i === 0) ctx.beginPath();
+            ctx.strokeStyle = "red";
+            ctx.lineTo(250 + points[i].x, 250 + points[i].y);
+            ctx.stroke();
+            i++;
+            if (i < points.length) {
+                requestAnimationFrame(drawHeart);
+            } else {
+                ctx.font = "bold 40px Arial";
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#FF99FF";
+                ctx.fillText("Nhấn vào đây", canvas.width / 2, canvas.height / 2);
+                heartDrawn = true; // Khi vẽ xong trái tim, đặt biến thành true
+            }
+        }
+
+        function createFloatingHeart() {
+            let heart = document.createElement("div");
+            heart.classList.add("heart");
+            heart.innerHTML = "❤️";
+            document.body.appendChild(heart);
+
+            let x = Math.random() * window.innerWidth;
+            let y = window.innerHeight;
+            let size = Math.random() * 20 + 10;
+            let speed = Math.random() * 2 + 1;
+            let opacity = 1;
+
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+            heart.style.fontSize = `${size}px`;
+            heart.style.opacity = opacity;
+
+            function animateHeart() {
+                y -= speed;
+                opacity -= 0.01;
+                heart.style.top = `${y}px`;
+                heart.style.opacity = opacity;
+
+                if (opacity <= 0) {
+                    heart.remove();
+                } else {
+                    requestAnimationFrame(animateHeart);
+                }
+            }
+            animateHeart();
+        }
+
+        const envelopeImg = new Image();
+        envelopeImg.src = "./Xuyen.png";
+
+        function drawEnvelope() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let imgWidth, imgHeight;
+            if (window.innerWidth > 768) { // Máy tính
+                imgWidth = canvas.width * 1.2; // Chiều rộng chiếm 120% canvas
+            } else { // Điện thoại
+                imgWidth = canvas.width * 0.8; // Chiều rộng chiếm 80% canvas
+            }
+
+            // Giữ tỷ lệ khung hình của ảnh
+            imgHeight = (envelopeImg.height / envelopeImg.width) * imgWidth;
+
+            // Đảm bảo hình ảnh ở giữa màn hình
+            let centerX = (canvas.width - imgWidth) / 2;
+            let centerY = (canvas.height - imgHeight) / 2;
+
+            ctx.drawImage(envelopeImg, centerX, centerY, imgWidth, imgHeight);
+        }
+
+        canvas.addEventListener("click", () => {
+            if (state === "heart" && heartDrawn) { // Chỉ chuyển nếu đã vẽ xong
+                state = "envelope";
+                drawEnvelope();
+            }
+        });
+
+        drawHeart();
+        setInterval(createFloatingHeart, 500);
+        const bgMusic = document.getElementById("bg-music");
+
+        function playMusic() {
+            bgMusic.muted = false;  // Bật âm thanh
+            bgMusic.play().catch(err => {
+                console.log("Không thể phát nhạc ngay, thử lại sau:", err);
+                setTimeout(playMusic, 2000); // Thử lại sau 2 giây nếu bị chặn
+            });
+        }
+
+        // Tự động bật nhạc sau khi trang tải xong
+        window.addEventListener("load", () => {
+            setTimeout(playMusic, 1000); // Đợi 1 giây để đảm bảo nhạc tải xong
+        });
+    </script>
+</body>
+</html>
